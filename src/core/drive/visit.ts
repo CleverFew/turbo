@@ -45,6 +45,7 @@ export type VisitOptions = {
   snapshot?: PageSnapshot
   snapshotHTML?: string
   response?: VisitResponse
+  partialResponse: boolean
   visitCachedSnapshot(snapshot: Snapshot): void
   willRender: boolean
   updateHistory: boolean
@@ -62,12 +63,14 @@ const defaultOptions: VisitOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
+  partialResponse: false,
 }
 
 export type VisitResponse = {
   statusCode: number
   redirected: boolean
   responseHTML?: string
+  partialRender?: boolean
 }
 
 export enum SystemStatusCode {
@@ -253,12 +256,19 @@ export class Visit implements FetchRequestDelegate {
 
   loadResponse() {
     if (this.response) {
-      const { statusCode, responseHTML } = this.response
+      const { statusCode, responseHTML, partialRender } = this.response
       this.render(async () => {
         if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender, this)
+          // here is where the page is rendered
+          await this.view.renderPage(
+            PageSnapshot.fromHTMLString(responseHTML),
+            false,
+            this.willRender,
+            this,
+            partialRender
+          )
           this.performScroll()
           this.adapter.visitRendered(this)
           this.complete()

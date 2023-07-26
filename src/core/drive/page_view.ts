@@ -20,9 +20,16 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 
-  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit) {
+  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit, partial = false) {
     const shouldTransition = this.snapshot.prefersViewTransitions && snapshot.prefersViewTransitions
-    const renderer = new PageRenderer(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
+    const renderer = new PageRenderer(
+      this.snapshot,
+      snapshot,
+      PageRenderer.renderElement,
+      isPreview,
+      willRender,
+      partial
+    )
 
     if (!renderer.shouldRender) {
       this.forceReloaded = true
