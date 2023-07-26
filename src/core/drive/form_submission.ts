@@ -181,11 +181,7 @@ export class FormSubmission {
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     if (response.clientError || response.serverError) {
       this.delegate.formSubmissionFailedWithResponse(this, response)
-    } else if (
-      this.requestMustRedirect(request) &&
-      responseSucceededWithoutRedirect(response) &&
-      !responsePartial(response)
-    ) {
+    } else if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response) && !response.isPartial) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
     } else {
@@ -280,10 +276,6 @@ function getCookieValue(cookieName: string | null) {
 
 function responseSucceededWithoutRedirect(response: FetchResponse) {
   return response.statusCode == 200 && !response.redirected
-}
-
-function responsePartial(response: FetchResponse) {
-  return response.header("Turbo-Partial") === "true"
 }
 
 function mergeFormDataEntries(url: URL, entries: [string, FormDataEntryValue][]): URL {

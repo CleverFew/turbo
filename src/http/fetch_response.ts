@@ -35,6 +35,10 @@ export class FetchResponse {
     return this.contentType && this.contentType.match(/^(?:text\/([^\s;,]+\b)?html|application\/xhtml\+xml)\b/)
   }
 
+  get isPartial() {
+    return this.header("Turbo-Partial") === "true"
+  }
+
   get statusCode() {
     return this.response.status
   }
