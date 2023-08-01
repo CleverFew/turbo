@@ -272,8 +272,7 @@ export class Visit implements FetchRequestDelegate {
   }
 
   getCachedSnapshot() {
-    const cachedShapshot = this.view.getCachedSnapshotForLocation(this.location)
-    const snapshot = cachedShapshot || this.getPreloadedSnapshot()
+    const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
 
     if (snapshot && (!getAnchor(this.location) || snapshot.hasAnchor(getAnchor(this.location)))) {
       if (this.action == "restore" || snapshot.isPreviewable) {
