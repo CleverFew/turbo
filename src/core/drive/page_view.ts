@@ -3,6 +3,7 @@ import { View, ViewDelegate, ViewRenderOptions } from "../view"
 import { ErrorRenderer } from "./error_renderer"
 import { PageRenderer } from "./page_renderer"
 import { PageSnapshot } from "./page_snapshot"
+import { PartialPageRenderer } from "./partial_page_renderer"
 import { SnapshotCache } from "./snapshot_cache"
 import { withViewTransition } from "./view_transitions"
 import { Visit } from "./visit"
@@ -13,23 +14,16 @@ export interface PageViewDelegate extends ViewDelegate<HTMLBodyElement, PageSnap
   viewWillCacheSnapshot(): void
 }
 
-type PageViewRenderer = PageRenderer | ErrorRenderer
+type PageViewRenderer = PageRenderer | PartialPageRenderer | ErrorRenderer
 
 export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRenderer, PageViewDelegate> {
   readonly snapshotCache = new SnapshotCache(10)
   lastRenderedLocation = new URL(location.href)
   forceReloaded = false
 
-  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit, partial = false) {
+  renderPage(snapshot: PageSnapshot, isPreview = false, willRender = true, visit?: Visit) {
     const shouldTransition = this.snapshot.prefersViewTransitions && snapshot.prefersViewTransitions
-    const renderer = new PageRenderer(
-      this.snapshot,
-      snapshot,
-      PageRenderer.renderElement,
-      isPreview,
-      willRender,
-      partial
-    )
+    const renderer = new PageRenderer(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
 
     if (!renderer.shouldRender) {
       this.forceReloaded = true
@@ -38,6 +32,11 @@ export class PageView extends View<HTMLBodyElement, PageSnapshot, PageViewRender
     }
 
     return withViewTransition(shouldTransition, () => this.render(renderer))
+  }
+
+  renderPartial(snapshot: PageSnapshot, isPreview = false, willRender = true) {
+    const renderer = new PartialPageRenderer(this.snapshot, snapshot, PageRenderer.renderElement, isPreview, willRender)
+    return this.render(renderer)
   }
 
   renderError(snapshot: PageSnapshot, visit?: Visit) {

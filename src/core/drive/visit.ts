@@ -45,7 +45,7 @@ export type VisitOptions = {
   snapshot?: PageSnapshot
   snapshotHTML?: string
   response?: VisitResponse
-  partialResponse: boolean
+  isPartialResponse: boolean
   visitCachedSnapshot(snapshot: Snapshot): void
   willRender: boolean
   updateHistory: boolean
@@ -63,14 +63,13 @@ const defaultOptions: VisitOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
-  partialResponse: false,
+  isPartialResponse: false,
 }
 
 export type VisitResponse = {
   statusCode: number
   redirected: boolean
   responseHTML?: string
-  partialRender?: boolean
 }
 
 export enum SystemStatusCode {
@@ -256,19 +255,12 @@ export class Visit implements FetchRequestDelegate {
 
   loadResponse() {
     if (this.response) {
-      const { statusCode, responseHTML, partialRender } = this.response
+      const { statusCode, responseHTML } = this.response
       this.render(async () => {
         if (this.shouldCacheSnapshot) this.cacheSnapshot()
         if (this.view.renderPromise) await this.view.renderPromise
         if (isSuccessful(statusCode) && responseHTML != null) {
-          // here is where the page is rendered
-          await this.view.renderPage(
-            PageSnapshot.fromHTMLString(responseHTML),
-            false,
-            this.willRender,
-            this,
-            partialRender
-          )
+          await this.view.renderPage(PageSnapshot.fromHTMLString(responseHTML), false, this.willRender, this)
           this.performScroll()
           this.adapter.visitRendered(this)
           this.complete()
@@ -282,7 +274,8 @@ export class Visit implements FetchRequestDelegate {
   }
 
   getCachedSnapshot() {
-    const snapshot = this.view.getCachedSnapshotForLocation(this.location) || this.getPreloadedSnapshot()
+    const cachedShapshot = this.view.getCachedSnapshotForLocation(this.location)
+    const snapshot = cachedShapshot || this.getPreloadedSnapshot()
 
     if (snapshot && (!getAnchor(this.location) || snapshot.hasAnchor(getAnchor(this.location)))) {
       if (this.action == "restore" || snapshot.isPreviewable) {

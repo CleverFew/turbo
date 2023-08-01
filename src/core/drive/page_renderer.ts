@@ -4,16 +4,8 @@ import { ReloadReason } from "../native/browser_adapter"
 import { activateScriptElement, waitForLoad } from "../../util"
 
 export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
-  static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement, partial = false) {
+  static renderElement(currentElement: HTMLBodyElement, newElement: HTMLBodyElement) {
     if (document.body && newElement instanceof HTMLBodyElement) {
-      if (partial) {
-        Array.from(newElement.children).forEach((element) => {
-          const existingElement = document.getElementById(element.id)
-          existingElement?.replaceWith(newElement)
-        })
-        return
-      }
-
       document.body.replaceWith(newElement)
     } else {
       document.documentElement.appendChild(newElement)
@@ -21,7 +13,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   get shouldRender() {
-    return this.newSnapshot.isVisitable && (this.trackedElementsAreIdentical || this.partial)
+    return this.newSnapshot.isVisitable && this.trackedElementsAreIdentical
   }
 
   get reloadReason(): ReloadReason {
@@ -166,7 +158,7 @@ export class PageRenderer extends Renderer<HTMLBodyElement, PageSnapshot> {
   }
 
   async assignNewBody() {
-    await this.renderElement(this.currentElement, this.newElement, this.partial)
+    await this.renderElement(this.currentElement, this.newElement)
   }
 
   get newHeadStylesheetElements() {

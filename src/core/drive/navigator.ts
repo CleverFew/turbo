@@ -84,17 +84,17 @@ export class Navigator {
     if (formSubmission == this.formSubmission) {
       const responseHTML = await fetchResponse.responseHTML
       if (responseHTML) {
-        const shouldCacheSnapshot = formSubmission.isSafe
+        const shouldCacheSnapshot = formSubmission.isSafe && !fetchResponse.isPartialResponse
         if (!shouldCacheSnapshot) {
           this.view.clearSnapshotCache()
         }
 
-        const { statusCode, redirected } = fetchResponse
+        const { statusCode, redirected, isPartialResponse } = fetchResponse
         const action = this.getActionForFormSubmission(formSubmission)
         const visitOptions = {
           action,
           shouldCacheSnapshot,
-          response: { statusCode, responseHTML, redirected, partialResponse: fetchResponse.isPartial },
+          response: { statusCode, responseHTML, redirected, isPartialResponse },
         }
         this.proposeVisit(fetchResponse.location, visitOptions)
       }
@@ -108,8 +108,10 @@ export class Navigator {
       const snapshot = PageSnapshot.fromHTMLString(responseHTML)
       if (fetchResponse.serverError) {
         await this.view.renderError(snapshot, this.currentVisit)
+      } else if (fetchResponse.isPartialResponse) {
+        return this.view.renderPartial(snapshot, false, true)
       } else {
-        await this.view.renderPage(snapshot, false, true, this.currentVisit, fetchResponse.isPartial)
+        await this.view.renderPage(snapshot, false, true, this.currentVisit)
       }
       this.view.scrollToTop()
       this.view.clearSnapshotCache()

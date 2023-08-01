@@ -52,7 +52,7 @@ export class FormSubmission {
   readonly formData: FormData
   readonly location: URL
   readonly fetchRequest: FetchRequest
-  readonly mustRedirect: boolean
+  readonly shouldRedirect: boolean
   state = FormSubmissionState.initialized
   result?: FormSubmissionResult
   originalSubmitText?: string
@@ -69,7 +69,7 @@ export class FormSubmission {
     delegate: FormSubmissionDelegate,
     formElement: HTMLFormElement,
     submitter?: HTMLElement,
-    mustRedirect = false
+    shouldRedirect = false
   ) {
     this.delegate = delegate
     this.formElement = formElement
@@ -80,7 +80,7 @@ export class FormSubmission {
       mergeFormDataEntries(this.location, [...this.body.entries()])
     }
     this.fetchRequest = new FetchRequest(this, this.method, this.location, this.body, this.formElement)
-    this.mustRedirect = mustRedirect
+    this.shouldRedirect = shouldRedirect
   }
 
   get method(): FetchMethod {
@@ -181,7 +181,7 @@ export class FormSubmission {
   requestSucceededWithResponse(request: FetchRequest, response: FetchResponse) {
     if (response.clientError || response.serverError) {
       this.delegate.formSubmissionFailedWithResponse(this, response)
-    } else if (this.requestMustRedirect(request) && responseSucceededWithoutRedirect(response) && !response.isPartial) {
+    } else if (this.mustRedirect(request, response) && responseSucceededWithoutRedirect(response)) {
       const error = new Error("Form responses must redirect to another location")
       this.delegate.formSubmissionErrored(this, error)
     } else {
@@ -238,8 +238,8 @@ export class FormSubmission {
     }
   }
 
-  requestMustRedirect(request: FetchRequest) {
-    return !request.isSafe && this.mustRedirect
+  mustRedirect(request: FetchRequest, response: FetchResponse) {
+    return !request.isSafe && this.shouldRedirect && !response.isPartialResponse
   }
 
   requestAcceptsTurboStreamResponse(request: FetchRequest) {
