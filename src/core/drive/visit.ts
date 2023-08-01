@@ -45,7 +45,6 @@ export type VisitOptions = {
   snapshot?: PageSnapshot
   snapshotHTML?: string
   response?: VisitResponse
-  isPartialResponse: boolean
   visitCachedSnapshot(snapshot: Snapshot): void
   willRender: boolean
   updateHistory: boolean
@@ -63,7 +62,6 @@ const defaultOptions: VisitOptions = {
   updateHistory: true,
   shouldCacheSnapshot: true,
   acceptsStreamResponse: false,
-  isPartialResponse: false,
 }
 
 export type VisitResponse = {
